@@ -169,7 +169,7 @@ These models use the same **inference endpoint**:
 https://inference.do-ai.run
 ```
 
-> To use these models, opt in to the **Fal Models Public Preview** in the DigitalOcean console.
+> To use these models, opt in to the [Fal Models Public Preview](https://cloud.digitalocean.com/account/feature-preview?feature=fal-models) in the DigitalOcean console.
 > Access is typically available within 10–15 minutes after opting in.
 
 ---
