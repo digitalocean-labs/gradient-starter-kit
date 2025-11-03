@@ -147,6 +147,163 @@ curl https://inference.do-ai.run/v1/images/generations \
 
 ---
 
+## 3. Multimodal Models (Fal)
+
+Gradient now supports **multimodal models** from **Fal**, available through **Serverless Inference**.
+You can use these to generate **images** and **audio** using the same API pattern you’ve already used for text and image tasks.
+
+---
+
+### Available Models
+
+| Type      | Model ID                                | Description                                                                 |
+| --------- | --------------------------------------- | --------------------------------------------------------------------------- |
+| 🖼️ Image | `fal-ai/fast-sdxl`                      | Stable Diffusion XL (fast) — high-quality, high-resolution image generation |
+| 🖼️ Image | `fal-ai/flux/schnell`                   | FLUX.1 (schnell) — fast image generation for prototyping                    |
+| 🔊 Audio  | `fal-ai/stable-audio-25/text-to-audio`  | Stable Audio — convert text to natural-sounding audio                       |
+| 🔊 Audio  | `fal-ai/elevenlabs/tts/multilingual-v2` | ElevenLabs Multilingual v2 — text-to-speech with multilingual support       |
+
+These models use the same **inference endpoint**:
+
+```
+https://inference.do-ai.run
+```
+
+> To use these models, opt in to the **Fal Models Public Preview** in the DigitalOcean console.
+> Access is typically available within 10–15 minutes after opting in.
+
+---
+
+### Example 1: Generate an Image (Fal FLUX.1 Schnell)
+
+```python
+%%bash
+curl -sS -X POST 'https://inference.do-ai.run/v1/async-invoke' \
+  -H "Authorization: Bearer $DIGITAL_OCEAN_MODEL_ACCESS_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_id": "fal-ai/flux/schnell",
+    "input": { "prompt": "A high-quality photo of a futuristic city at sunset" }
+  }'
+```
+
+This starts an asynchronous job and returns a `request_id`.
+
+---
+
+### Check Job Status
+
+Use the request ID to check progress:
+
+```python
+%%bash
+
+curl -sS -X GET "https://inference.do-ai.run/v1/async-invoke/$REQUEST_ID/status" \
+  -H "Authorization: Bearer $DIGITAL_OCEAN_MODEL_ACCESS_KEY"
+```
+
+
+Keep polling this endpoint until you see:
+
+```json
+{ "status": "COMPLETE" }
+```
+
+---
+
+### Retrieve the Result
+
+Once the job completes, fetch the final output (includes the image URL):
+
+```python
+%%bash
+
+curl -sS -X GET "https://inference.do-ai.run/v1/async-invoke/$REQUEST_ID" \
+  -H "Authorization: Bearer $DIGITAL_OCEAN_MODEL_ACCESS_KEY"
+```
+
+
+The response contains a URL to the generated file.
+
+---
+### Example 2: Generate an Image with Customized Parameters
+
+```python
+%%bash
+curl -sS -X POST 'https://inference.do-ai.run/v1/async-invoke' \
+  -H "Authorization: Bearer $DIGITAL_OCEAN_MODEL_ACCESS_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_id": "fal-ai/fast-sdxl",
+    "input": {
+      "prompt": "A high-quality photo of a futuristic city at sunset",
+      "output_format": "landscape_4_3",
+      "num_inference_steps": 4,
+      "guidance_scale": 3.5,
+      "num_images": 1,
+      "enable_safety_checker": true
+    },
+    "tags": [
+      { "key": "type", "value": "test" }
+    ]
+  }'
+```
+
+---
+
+### Example 3: Generate Sound (Text → Audio)
+
+```python
+%%bash
+
+curl -sS -X POST 'https://inference.do-ai.run/v1/async-invoke' \
+  -H "Authorization: Bearer $DIGITAL_OCEAN_MODEL_ACCESS_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_id": "fal-ai/stable-audio-25/text-to-audio",
+    "input": {
+      "prompt": "Futuristic epic song",
+      "seconds_total": 60
+    },
+    "tags": [
+      { "key": "type", "value": "test" }
+    ]
+  }'
+```
+---
+### Example 4: Generate Audio (Fal ElevenLabs Multilingual TTS)
+
+```python
+%%bash
+curl -sS -X POST 'https://inference.do-ai.run/v1/async-invoke' \
+  -H "Authorization: Bearer $DIGITAL_OCEAN_MODEL_ACCESS_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_id": "fal-ai/elevenlabs/tts/multilingual-v2",
+    "input": {
+      "text": "Welcome to Gradient — generating audio from text.",
+      "voice": "Rachel",
+      "language": "en"
+    }
+  }'
+```
+
+This returns a `request_id`, which you can use to check status and retrieve the final audio file.
+
+---
+
+### Summary
+
+| Action           | Endpoint                                   | Example                           |
+| ---------------- | ------------------------------------------ | --------------------------------- |
+| Start async job  | `POST /v1/async-invoke`                    | Submit prompt or input            |
+| Check status     | `GET /v1/async-invoke/{request_id}/status` | Wait until `"status": "COMPLETE"` |
+| Get final result | `GET /v1/async-invoke/{request_id}`        | Fetch generated file              |
+
+> These async endpoints work for both **image** and **audio** generation tasks.
+
+---
+
 ## 3. Using Python (OpenAI SDK)
 
 Once the cURL tests work, it's easier to move to Python.
